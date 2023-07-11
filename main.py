@@ -8,8 +8,7 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 import time
-from datetime import datetime
-
+import sys
 
 class CourtType(Enum):
     Indoor = "Indoor"
@@ -28,14 +27,23 @@ class Day(Enum):
 
 
 ## parameters:
-user_name = "5012978"
-pass_word = "795376"
+print("Let's get your credentials ready.. please make sure they are accurate!")
+user_name = input("Please enter user name: ")
+pass_word = input("Please enter password: ")
+print("Thanks now let's get your desired schedule:")
+desired_time_slot_map = {Day.Mon: input("Please enter time you want on Monday: "),
+                         Day.Tue: input("Please enter time you want on Tuesday: "),
+                         Day.Wed: input("Please enter time you want on Wednesday: "),
+                         Day.Thu: input("Please enter time you want on Thursday: "),
+                         Day.Fri: input("Please enter time you want on Friday: "),
+                         Day.Sat: input("Please enter time you want on Saturday: "),
+                         Day.Sun: input("Please enter time you want on Sunday: ")}
+desired_court_type_string = input("Please preferred court type: Bubble, Indoor or Outdoor: ")
+desired_court_type = CourtType(desired_court_type_string)
 
-user_name1 = "4889740"
-pass_word1 = "150200"
-
-desired_time_slot_map = {Day.Mon: "9:00AM", Day.Tue: "9:00AM", Day.Wed: "9:00AM", Day.Thu: "9:00AM", Day.Fri: "9:00AM",
-                         Day.Sat: "9:00AM", Day.Sun: "9:00AM"}
+## mins
+interval = int(input("Please enter request interval, min is 5 mins: "))
+interval = min(interval, 5)
 
 ## constants
 day_indent_map = {"Mon": 2, "Tue": 3, "Wed": 4, "Thu": 5, "Fri": 6,
@@ -131,10 +139,10 @@ def try_add_to_cart(day: Day, desired_time_slot: str, desired_court_type: CourtT
     time.sleep(4)
     try:
         driver.find_element(By.CLASS_NAME, "no-search-result-div")
-        print("No such elements")
+        print("No such elements for", day.value)
         return False
     except NoSuchElementException:
-        print("Searching results...")
+        print("Searching results... for", day.value)
     drop_in_tennis = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, "//*[@id='activity-1-20387']/div[1]/span[1]/a")))
     drop_in_tennis.click()
@@ -160,6 +168,7 @@ def try_add_to_cart(day: Day, desired_time_slot: str, desired_court_type: CourtT
                     time_slot_text.accessible_name.startswith(desired_time_slot) and
                     desired_court_type.value in court_name_text.accessible_name and
                     add_to_bucket_button.accessible_name == "Add to Cart"):
+                print(day_text.accessible_name, time_slot_text.accessible_name + " is available adding to basket", )
                 add_to_bucket_button.click()
                 time.sleep(4)
                 select_candidate_name_and_add_to_cart_continue_shopping()
@@ -204,15 +213,16 @@ def main():
 
     driver.get("https://efun.toronto.ca/torontofun/MyBasket/MyBasketCheckout.asp")
     try:
+        print("going to submit!")
         driver.find_element(By.XPATH, "//*[@id='completeTransactionButton']").click()
         time.sleep(4)
         driver.find_element(By.XPATH, "//*[@id='program-liability-waiver']/form/div[2]/span[1]/input").click()
+        print("well done!")
+        sys.exit()
     except NoSuchElementException:
         print("cart is empty, cannot do anything...")
 
 
-## mins
-interval = 5
 if __name__ == "__main__":
     while True:
         main()
